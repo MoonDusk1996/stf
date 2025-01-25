@@ -1,7 +1,7 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive( Debug, Serialize, Deserialize)]
-pub struct Config{
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Config {
     pub fiat: String,
 }
 impl Default for Config {
@@ -17,7 +17,7 @@ pub fn current() -> Config {
         Ok(cfg) => cfg,
         Err(e) => {
             eprintln!("Erro ao carregar a configuração: {}", e);
-            Config::default() // Retorna a configuração padrão em caso de erro
+            Config::default()
         }
     }
 }
@@ -36,4 +36,3 @@ pub fn _set(config: String) {
         eprintln!("Erro ao definir a configuração: {}", e);
     }
 }
-

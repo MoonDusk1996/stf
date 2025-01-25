@@ -7,45 +7,43 @@ mod config;
 
 #[derive(Deserialize)]
 struct ApiResponse {
-    bitcoin: HashMap<String, f64>, // Usando HashMap para permitir várias moedas
+    bitcoin: HashMap<String, f64>,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = config::current();
-    let fiat = get_fiat();
+    let sats = get_sats();
 
-    // CoinGecko API
-    let url = format!("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies={}", config.fiat);
+    let coingeko_api = format!(
+        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies={}",
+        config.fiat
+    );
     let client = Client::new();
-    let response: ApiResponse = client.get(&url).send().await?.json().await?;
+    let response: ApiResponse = client.get(&coingeko_api).send().await?.json().await?;
 
-    // Acessa o valor da moeda, independentemente do nome da chave (por exemplo, "brl" ou outro)
     if let Some(btc_price) = response.bitcoin.get(&config.fiat) {
-        let satoshi_brl = btc_price / 100_000_000.0;
-
-        // Imprimindo os resultados
-        println!("{}", fiat * satoshi_brl );
+        let sats_price = btc_price / 100_000_000.0;
+        println!("{}", sats * sats_price);
     } else {
-        eprintln!("Erro: A moeda especificada não foi encontrada na resposta.");
+        eprintln!("Error: Fiat currency not found");
     }
 
     Ok(())
 }
 
-
-fn get_fiat() -> f64 {
+fn get_sats() -> f64 {
     match env::args().nth(1) {
         Some(arg) => match arg.parse::<f64>() {
-            Ok(value) => value,  // Se a conversão for bem-sucedida, retorna o valor
+            Ok(value) => value,
             Err(_) => {
-                eprintln!("Erro: O argumento fornecido não pode ser convertido para um número.");
-                std::process::exit(1); // Sai com código de erro
+                eprintln!("Error: argument is not a valid satoshi value");
+                std::process::exit(1);
             }
         },
         None => {
-            eprintln!("Erro: Esperado um argumento.");
-            std::process::exit(1); // Sai com código de erro
+            eprintln!("Error: Expected a value in satoshi");
+            std::process::exit(1);
         }
     }
 }
